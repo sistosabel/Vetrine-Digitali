@@ -76,16 +76,16 @@
   <div class="card">
     <div class="card-header"><h2>Realtà aumentata vetrine</h2></div>
     <div class="card-body">
-      <div class="warn">Ora nella AR preview non vedrai più astronauta/robot/sedia: ho collegato tre modelli 3D neri semplici con misure corrette. Per la AR vera su telefono è molto meglio pubblicare questa pagina su HTTPS anziché aprirla come file locale.</div>
+      <div class="warn">Ora nella AR preview vedrai modelli con l’immagine reale della vetrina applicata sul fronte e scala bloccata: in AR puoi spostarli e ruotarli, ma non ridimensionarli. Per la AR vera su telefono è molto meglio pubblicare questa pagina su HTTPS anziché aprirla come file locale.</div>
       <div class="ar-grid">
         <div class="ar-list" id="arOptions"></div>
         <div class="stack">
-          <model-viewer id="arViewer" src="vetrina_verticale.glb" ios-src="" camera-controls auto-rotate ar ar-modes="webxr scene-viewer quick-look" shadow-intensity="1" exposure="1" interaction-prompt="auto"></model-viewer>
+          <model-viewer id="arViewer" src="vetrina_verticale.glb" ios-src="" camera-controls auto-rotate ar ar-scale="fixed" ar-modes="webxr scene-viewer quick-look" shadow-intensity="1" exposure="1" interaction-prompt="auto"></model-viewer>
           <div class="row">
             <button id="launchArBtn" class="btn primary" type="button">Apri in AR</button>
           </div>
           <div id="arMeta" class="dim-list"></div>
-          <div class="tiny">Modelli inclusi: nero semplice. Verticale, orizzontale 55”, orizzontale 65”.</div>
+          <div class="tiny">Modelli inclusi: nero semplice con immagine vetrina sul fronte. Scala AR bloccata.</div>
         </div>
       </div>
     </div>
