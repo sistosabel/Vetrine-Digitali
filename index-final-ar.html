@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AR Planimetria</title>
+<script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+
+<style>
+body{margin:0;font-family:Arial;background:#f3f4f6}
+.container{padding:12px;max-width:800px;margin:auto}
+button{padding:10px;border-radius:10px;border:1px solid #ccc;margin:4px}
+.primary{background:#000;color:#fff}
+#shotBtn{position:absolute;bottom:20px;left:20px;z-index:10}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<h3>Link rapidi</h3>
+<a href="https://forms.office.com/pages/responsepage.aspx?id=b-cddlw9dEGRfFrU0GNgy7KRrjqawSdLquppF2B-GUpURVNWOVVBMjQ3NTQxUDZWSEtFRE1UOVlGSi4u&route=shorturl" target="_blank">
+<button class="primary">Apri Modulo</button></a>
+
+<a href="https://posteitaliane.sharepoint.com" target="_blank">
+<button>Apri SharePoint</button></a>
+
+<h3>AR Viewer</h3>
+
+<div style="position:relative">
+<model-viewer id="mv"
+ar
+ar-modes="webxr scene-viewer quick-look"
+ar-scale="fixed"
+camera-controls
+orientation="0deg 0deg 0deg"
+src="https://modelviewer.dev/shared-assets/models/Astronaut.glb"
+style="width:100%;height:400px">
+</model-viewer>
+
+<button id="shotBtn" class="primary">Scatta foto AR</button>
+</div>
+
+<button onclick="setModel('verticale')">Verticale (floor)</button>
+<button onclick="setModel('oriz')">Orizzontale (wall)</button>
+
+</div>
+
+<script>
+const mv = document.getElementById('mv')
+const shotBtn = document.getElementById('shotBtn')
+
+const MODELS = {
+verticale:{
+src:"https://modelviewer.dev/shared-assets/models/Astronaut.glb",
+placement:"floor"
+},
+oriz:{
+src:"https://modelviewer.dev/shared-assets/models/RobotExpressive.glb",
+placement:"wall"
+}
+}
+
+function setModel(type){
+const m = MODELS[type]
+mv.src = m.src
+mv.setAttribute('ar-placement', m.placement)
+}
+
+// MOSTRA pulsante SOLO in WebXR
+mv.addEventListener('ar-status', (e)=>{
+if(e.detail.status === 'session-started'){
+shotBtn.style.display = 'block'
+}else{
+shotBtn.style.display = 'none'
+}
+})
+
+// screenshot (solo WebXR / preview)
+shotBtn.onclick = async ()=>{
+try{
+const data = await mv.toDataURL('image/png')
+const a = document.createElement('a')
+a.href = data
+a.download = "ar-shot.png"
+a.click()
+}catch{
+alert("Screenshot disponibile solo in WebXR o preview")
+}
+}
+</script>
+
+</body>
+</html>
