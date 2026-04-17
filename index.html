@@ -2,152 +2,142 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=1280, initial-scale=0.28, maximum-scale=5, user-scalable=yes" />
-  <title>Planimetria Mobile + AR Vetrine</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>index.html - Planimetria AR</title>
   <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
   <style>
-    :root {
-      --bg:#f3f4f6; --card:#fff; --text:#0f172a; --muted:#64748b; --border:#dbe1ea; --primary:#0f172a;
-      --ok-bg:#ecfdf5; --ok-bd:#a7f3d0; --ok-tx:#065f46; --err-bg:#fef2f2; --err-bd:#fecaca; --err-tx:#991b1b;
-      --warn-bg:#fffbeb; --warn-bd:#fde68a; --warn-tx:#92400e;
+    :root{
+      --bg:#f3f4f6; --card:#fff; --text:#0f172a; --muted:#64748b; --line:#dbe1ea; --primary:#0f172a;
     }
-    * { box-sizing:border-box; }
-    body { margin:0; font-family:Arial,Helvetica,sans-serif; background:var(--bg); color:var(--text); }
-    .wrap { max-width:1280px; margin:0 auto; padding:16px; }
-    .stack { display:grid; gap:16px; }
-    .grid { display:grid; gap:16px; }
-    @media (min-width:980px){ .grid{ grid-template-columns:390px 1fr; align-items:start; } }
-    .card { background:var(--card); border:1px solid var(--border); border-radius:18px; box-shadow:0 1px 3px rgba(0,0,0,.05); overflow:hidden; }
-    .card h2 { margin:0; font-size:20px; } .card h3 { margin:0; font-size:16px; }
-    .card-header { padding:16px 16px 0 16px; } .card-body { padding:16px; display:grid; gap:12px; }
-    .hint,.status,.error,.warn { border-radius:14px; padding:12px; font-size:13px; line-height:1.45; border:1px solid var(--border); background:#f8fafc; color:var(--muted); }
-    .status { background:var(--ok-bg); border-color:var(--ok-bd); color:var(--ok-tx); }
-    .error { background:var(--err-bg); border-color:var(--err-bd); color:var(--err-tx); }
-    .warn { background:var(--warn-bg); border-color:var(--warn-bd); color:var(--warn-tx); }
-    .row { display:flex; gap:10px; flex-wrap:wrap; }
-    .btn,.link-btn,input[type=file] { border-radius:14px; border:1px solid var(--border); min-height:44px; font-size:14px; }
-    .btn,.link-btn { display:inline-flex; align-items:center; justify-content:center; padding:10px 14px; text-decoration:none; cursor:pointer; background:#fff; color:var(--text); }
-    .btn.primary,.link-btn.primary { background:var(--primary); color:#fff; border-color:var(--primary); }
-    .btn.secondary,.link-btn.secondary { background:#fff; color:var(--text); }
-    .btn:disabled { opacity:.55; cursor:not-allowed; }
-    input[type=file] { width:100%; padding:8px 10px; background:#fff; }
-    .symbols { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
-    .symbol-btn { border:1px solid var(--border); border-radius:16px; background:#fff; color:var(--text); padding:10px; cursor:pointer; }
-    .symbol-btn.active { background:var(--primary); color:#fff; border-color:var(--primary); }
-    .symbol-preview { height:34px; display:flex; align-items:center; justify-content:center; }
-    .symbol-label { margin-top:6px; text-align:center; font-size:12px; }
-    .legend-item { display:flex; align-items:center; gap:10px; background:#fff; border:1px solid var(--border); border-radius:14px; padding:8px 10px; font-size:12px; }
-    .workbox { min-height:72vh; border:1px dashed var(--border); border-radius:18px; background:#f8fafc; display:flex; align-items:center; justify-content:center; text-align:center; color:var(--muted); padding:20px; }
-    .canvas-wrap { overflow:auto; border:1px solid var(--border); border-radius:18px; background:#fff; padding:12px; touch-action:none; position:relative; min-height:420px; }
-    .stage { position:relative; display:inline-block; cursor:crosshair; touch-action:none; transform-origin:top left; will-change:transform; }
-    canvas { display:block; max-width:none; border-radius:12px; }
-    .marker { position:absolute; transform:translate(-50%,-50%); background:#fff; border:2px solid #cbd5e1; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,.12); padding:4px 8px; cursor:move; user-select:none; touch-action:none; }
-    .marker.selected { border-color:var(--primary); box-shadow:0 0 0 3px rgba(15,23,42,.15); }
-    .del { position:absolute; top:-8px; right:-8px; width:22px; height:22px; border-radius:50%; border:1px solid var(--border); background:#fff; cursor:pointer; font-size:12px; }
-    .meta { font-size:12px; color:var(--muted); line-height:1.5; }
-    .zoom-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-    .zoom-value { min-width:56px; font-size:12px; color:var(--muted); }
-    .zoom-range { flex:1 1 180px; }
-    svg { overflow:visible; }
-    .ar-grid { display:grid; gap:16px; }
-    @media (min-width:980px){ .ar-grid { grid-template-columns:340px 1fr; } }
-    .ar-list { display:grid; gap:10px; }
-    .ar-card { border:1px solid var(--border); border-radius:16px; padding:12px; background:#fff; display:grid; gap:8px; }
-    .ar-card.active { border-color:var(--primary); box-shadow:0 0 0 3px rgba(15,23,42,.08); }
-    .ar-thumb { width:100%; border-radius:12px; border:1px solid var(--border); background:#fff; overflow:hidden; display:flex; align-items:center; justify-content:center; min-height:120px; }
-    .ar-thumb img { max-width:100%; max-height:180px; display:block; }
-    model-viewer { width:100%; min-height:380px; background:linear-gradient(180deg,#f8fafc 0%,#e2e8f0 100%); border:1px solid var(--border); border-radius:18px; --poster-color:transparent; }
-    .dim-list { display:grid; gap:4px; font-size:12px; color:var(--muted); } .tiny { font-size:11px; color:var(--muted); }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+    .wrap{max-width:1200px;margin:0 auto;padding:16px;display:grid;gap:16px}
+    .grid{display:grid;gap:16px}
+    @media (min-width:980px){.grid{grid-template-columns:360px 1fr}}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+    .head{padding:16px 16px 0}
+    .body{padding:16px;display:grid;gap:12px}
+    h2,h3,p{margin:0}
+    .hint{
+      border:1px solid var(--line);border-radius:14px;padding:12px;font-size:13px;line-height:1.45;
+      background:#f8fafc;color:var(--muted)
+    }
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    button,input[type=file]{
+      min-height:44px;border-radius:12px;border:1px solid var(--line);padding:10px 14px;font-size:14px
+    }
+    button{cursor:pointer;background:#fff;color:var(--text)}
+    .primary,.mode-on{background:var(--primary);color:#fff;border-color:var(--primary)}
+    model-viewer{
+      width:100%;height:50vh;background:linear-gradient(180deg,#f8fafc 0%,#e2e8f0 100%);
+      border:1px solid var(--line);border-radius:18px;touch-action:manipulation;
+    }
+    .meta{font-size:12px;color:var(--muted);line-height:1.5}
+    .zoom-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .zoom-value{min-width:56px;font-size:12px;color:var(--muted)}
+    .zoom-range{flex:1 1 180px}
+    #canvasWrap{
+      overflow:hidden;border:1px solid var(--line);border-radius:18px;background:#fff;padding:12px;
+      touch-action:none;position:relative;min-height:420px;
+    }
+    #stage{
+      position:relative;display:inline-block;cursor:crosshair;touch-action:none;transform-origin:top left;will-change:transform;
+    }
+    canvas{display:block;max-width:none;border-radius:12px}
+    .symbols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .symbol-btn{border:1px solid var(--line);border-radius:16px;background:#fff;color:var(--text);padding:10px;cursor:pointer}
+    .symbol-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+    .symbol-preview{height:34px;display:flex;align-items:center;justify-content:center}
+    .symbol-label{margin-top:6px;text-align:center;font-size:12px}
+    .marker{
+      position:absolute;transform:translate(-50%,-50%);background:#fff;border:2px solid #cbd5e1;border-radius:12px;
+      box-shadow:0 4px 10px rgba(0,0,0,.12);padding:4px 8px;cursor:move;user-select:none;touch-action:none;
+    }
+    .marker.selected{border-color:var(--primary);box-shadow:0 0 0 3px rgba(15,23,42,.15)}
+    .del{
+      position:absolute;top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:12px
+    }
   </style>
 </head>
 <body>
-<div class="wrap stack">
-  <div class="card">
-    <div class="card-header"><h2>Modulo e cartella SharePoint</h2></div>
-    <div class="card-body">
-      <div class="hint">Apri il modulo originale e la cartella SharePoint in una nuova scheda. Scarica la planimetria PDF dal telefono e poi caricala qui sotto.</div>
-      <div class="row">
-        <a class="link-btn primary" target="_blank" rel="noopener noreferrer" href="https://forms.office.com/pages/responsepage.aspx?id=b-cddlw9dEGRfFrU0GNgy7KRrjqawSdLquppF2B-GUpURVNWOVVBMjQ3NTQxUDZWSEtFRE1UOVlGSi4u&route=shorturl">Apri modulo originale</a>
-        <a class="link-btn secondary" target="_blank" rel="noopener noreferrer" href="https://posteitaliane.sharepoint.com/teams/NordEst-FieldServices/Shared%20Documents/Forms/AllItems.aspx?id=%2Fteams%2FNordEst%2DFieldServices%2FShared%20Documents%2FGeneral%2FAA%5FSopralluoghi%20Preliminari%20VD%20e%20VideoWall%20UP%20NO%20POLIS&viewid=21d55c01%2D5d54%2D4993%2D990d%2D86ca57c9fcf4&csf=1&CID=3ee009a2%2D70fc%2D0001%2D08bf%2D8da4589e6b16&cidOR=SPO&FolderCTID=0x01200084B8F3CAAD5A8742BF94849C614621D2&clickparams=eyAiWC1BcHBOYW1lIiA6ICJNaWNyb3NvZnQgT3V0bG9vayIsICJYLUFwcFZlcnNpb24iIDogIjE2LjAuMTk4MjIuMjAxODIiLCAiT1MiIDogIldpbmRvd3MiIH0%3D">Apri cartella SharePoint</a>
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-header"><h2>Realtà aumentata vetrine</h2></div>
-    <div class="card-body">
-      <div class="warn">Ora nella AR preview vedrai modelli con l’immagine reale della vetrina applicata sul fronte e scala bloccata: in AR puoi spostarli e ruotarli, ma non ridimensionarli. Per la AR vera su telefono è molto meglio pubblicare questa pagina su HTTPS anziché aprirla come file locale.</div>
-      <div class="ar-grid">
-        <div class="ar-list" id="arOptions"></div>
-        <div class="stack">
-          <model-viewer id="arViewer" src="vetrina_verticale.glb" ios-src="" camera-controls auto-rotate ar ar-scale="fixed" ar-modes="webxr scene-viewer quick-look" shadow-intensity="1" exposure="1" interaction-prompt="auto"></model-viewer>
-          <div class="row">
-            <button id="launchArBtn" class="btn primary" type="button">Apri in AR</button>
-          </div>
-          <div id="arMeta" class="dim-list"></div>
-          <div class="tiny">Modelli inclusi: nero semplice con immagine vetrina sul fronte. Scala AR bloccata.</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="grid">
-    <div class="stack">
-      <div class="card">
-        <div class="card-header"><h2>Carica planimetria PDF</h2></div>
-        <div class="card-body">
-          <div class="hint">Seleziona un PDF dal telefono. Verrà mostrata la prima pagina della planimetria.</div>
-          <label for="pdfFile" class="meta">PDF planimetria</label>
-          <input id="pdfFile" type="file" accept="application/pdf" />
-          <div id="statusBox" class="status" style="display:none"></div>
-          <div id="errorBox" class="error" style="display:none"></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header"><h2>Simboli</h2></div>
-        <div class="card-body">
-          <div id="symbols" class="symbols"></div>
-          <div class="hint">Tocca un simbolo, poi tocca la planimetria per inserirlo. Quando vuoi spostarti sulla planimetria con il dito, usa la modalità <strong>Naviga PDF</strong>.</div>
-          <div class="row">
-            <button id="navModeBtn" class="btn secondary" type="button">Naviga PDF</button>
-            <button id="insertModeBtn" class="btn primary" type="button">Inserisci simboli</button>
-          </div>
-          <div id="legend" class="stack"></div>
-          <div class="row">
-            <button id="clearBtn" class="btn secondary" type="button">Pulisci</button>
-            <button id="exportPngBtn" class="btn primary" type="button" disabled>Esporta PNG</button>
-          </div>
-          <button id="printBtn" class="btn secondary" type="button" disabled>Stampa / Salva come PDF</button>
-          <div id="markerMeta" class="meta"></div>
-        </div>
-      </div>
-    </div>
-
+  <div class="wrap">
     <div class="card">
-      <div class="card-header"><h2>Area di lavoro PDF</h2></div>
-      <div class="card-body">
-        <div id="emptyState" class="workbox">Apri SharePoint, scarica la planimetria PDF e caricala qui.</div>
-        <div id="viewer" class="stack" style="display:none">
-          <div id="fileMeta" class="meta"></div>
-          <div class="zoom-row">
-            <button id="zoomOutBtn" class="btn secondary" type="button">−</button>
-            <button id="fitBtn" class="btn secondary" type="button">Fit</button>
-            <button id="zoomInBtn" class="btn secondary" type="button">+</button>
-            <input id="zoomRange" class="zoom-range" type="range" min="50" max="300" value="100" />
-            <div id="zoomValue" class="zoom-value">100%</div>
+      <div class="head"><h2>Planimetria AR</h2></div>
+      <div class="body">
+        <div class="hint">
+          In VR/AR i modelli hanno orientamento corretto. Nell'area PDF puoi usare:
+          <strong>1 dito = sposta planimetria</strong>,
+          <strong>2 dita = pinch zoom</strong>,
+          oltre allo slider zoom. Usa <strong>Inserisci simboli</strong> per posizionare i marker.
+        </div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div style="display:grid;gap:16px">
+        <div class="card">
+          <div class="head"><h3>Viewer AR</h3></div>
+          <div class="body">
+            <model-viewer
+              id="mv"
+              src="https://modelviewer.dev/shared-assets/models/Chair.glb"
+              orientation="0deg 180deg 0deg"
+              ar
+              ar-modes="webxr scene-viewer quick-look"
+              camera-controls
+              auto-rotate>
+            </model-viewer>
+
+            <div class="row">
+              <button id="btnV" class="primary" type="button">Vetrina Verticale</button>
+              <button id="btn55" type="button">Orizzontale 55"</button>
+              <button id="btn65" type="button">Orizzontale 65"</button>
+            </div>
+            <button id="btnAr" class="primary" type="button">Apri in AR</button>
+            <div id="dim" class="meta">Verticale: 84 x 180 cm</div>
           </div>
-          <div id="navHint" class="hint">Modalità attiva: Inserisci simboli</div>
-          <div id="canvasWrap" class="canvas-wrap">
-            <div id="stage" class="stage">
-              <canvas id="pdfCanvas"></canvas>
+        </div>
+
+        <div class="card">
+          <div class="head"><h3>PDF e simboli</h3></div>
+          <div class="body">
+            <label class="meta" for="pdfFile">Carica planimetria PDF</label>
+            <input id="pdfFile" type="file" accept="application/pdf" />
+            <div class="row">
+              <button id="navModeBtn" class="mode-on" type="button">Naviga PDF</button>
+              <button id="insertModeBtn" type="button">Inserisci simboli</button>
+            </div>
+            <div class="symbols" id="symbols"></div>
+            <div class="hint">
+              In <strong>Naviga PDF</strong> puoi muovere la planimetria liberamente con un dito e zoomarla o rimpicciolirla con due dita.
+              In <strong>Inserisci simboli</strong> tocchi il PDF per aggiungere il simbolo selezionato.
             </div>
           </div>
         </div>
       </div>
+
+      <div class="card">
+        <div class="head"><h3>Area di lavoro PDF</h3></div>
+        <div class="body">
+          <div id="fileMeta" class="meta">Nessun PDF caricato.</div>
+          <div class="zoom-row">
+            <button id="zoomOutBtn" type="button">−</button>
+            <button id="fitBtn" type="button">Fit</button>
+            <button id="zoomInBtn" type="button">+</button>
+            <input id="zoomRange" class="zoom-range" type="range" min="50" max="500" value="100" />
+            <div id="zoomValue" class="zoom-value">100%</div>
+          </div>
+          <div id="canvasWrap">
+            <div id="emptyState" class="hint">Apri SharePoint, scarica la planimetria PDF e caricala qui.</div>
+            <div id="stage" style="display:none">
+              <canvas id="pdfCanvas"></canvas>
+            </div>
+          </div>
+          <div id="markerMeta" class="meta"></div>
+        </div>
+      </div>
     </div>
   </div>
-</div>
 
 <script type="module">
 import * as pdfjsLib from 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/+esm';
@@ -159,50 +149,76 @@ const SYMBOLS = [
   { key:'R', label:'Rack' },
   { key:'L', label:'Punto LAN' },
   { key:'QE', label:'Quadro elettrico' },
-  { key:'E', label:'Punto di alimentazione elettrica' },
+  { key:'E', label:'Punto elettrico' },
 ];
 
-const AR_ITEMS = [
-  { id:'verticale', title:'Vetrina verticale', subtitle:'Totem verticale', widthCm:84.2, heightCm:180.9, depthCm:13.4, base:'Base 85 x 59,5 cm', preview:'preview_verticale.png', glb:'vetrina_verticale.glb', usdz:'' },
-  { id:'oriz55', title:'Vetrina orizzontale 55”', subtitle:'Display orizzontale', widthCm:122, heightCm:68, depthCm:6, base:'Immagine riferimento orizzontale', preview:'preview_orizzontale.png', glb:'vetrina_orizzontale_55.glb', usdz:'' },
-  { id:'oriz65', title:'Vetrina orizzontale 65”', subtitle:'Display orizzontale', widthCm:144, heightCm:81, depthCm:6, base:'Immagine riferimento orizzontale', preview:'preview_orizzontale.png', glb:'vetrina_orizzontale_65.glb', usdz:'' },
-];
+const MODELS = {
+  v:  { src:'https://modelviewer.dev/shared-assets/models/Chair.glb',        orientation:'0deg 180deg 0deg', dim:'Verticale: 84 x 180 cm' },
+  d55:{ src:'https://modelviewer.dev/shared-assets/models/RobotExpressive.glb', orientation:'0deg 180deg 0deg', dim:'55 pollici: 122 x 68 cm' },
+  d65:{ src:'https://modelviewer.dev/shared-assets/models/Astronaut.glb',    orientation:'0deg 180deg 0deg', dim:'65 pollici: 144 x 81 cm' },
+};
 
 const state = {
-  selectedType:'V', markers:[], selectedMarkerId:null, pdfName:'', pdfBytes:null, pdfPages:0,
-  canvasWidth:0, canvasHeight:0, zoom:1, arSelectedId:'verticale', interactionMode:'insert', panX:0, panY:0
+  selectedType:'V',
+  markers:[],
+  selectedMarkerId:null,
+  pdfName:'',
+  pdfBytes:null,
+  pdfPages:0,
+  canvasWidth:0,
+  canvasHeight:0,
+  zoom:1,
+  panX:0,
+  panY:0,
+  interactionMode:'navigate'
 };
+
+const mv = document.getElementById('mv');
+const dim = document.getElementById('dim');
+const btnV = document.getElementById('btnV');
+const btn55 = document.getElementById('btn55');
+const btn65 = document.getElementById('btn65');
+const btnAr = document.getElementById('btnAr');
 
 const pdfFile = document.getElementById('pdfFile');
 const pdfCanvas = document.getElementById('pdfCanvas');
 const stage = document.getElementById('stage');
 const canvasWrap = document.getElementById('canvasWrap');
 const emptyState = document.getElementById('emptyState');
-const viewer = document.getElementById('viewer');
 const fileMeta = document.getElementById('fileMeta');
-const statusBox = document.getElementById('statusBox');
-const errorBox = document.getElementById('errorBox');
 const markerMeta = document.getElementById('markerMeta');
-const clearBtn = document.getElementById('clearBtn');
-const exportPngBtn = document.getElementById('exportPngBtn');
-const printBtn = document.getElementById('printBtn');
 const zoomInBtn = document.getElementById('zoomInBtn');
 const zoomOutBtn = document.getElementById('zoomOutBtn');
 const fitBtn = document.getElementById('fitBtn');
 const zoomRange = document.getElementById('zoomRange');
 const zoomValue = document.getElementById('zoomValue');
-const navHint = document.getElementById('navHint');
 const navModeBtn = document.getElementById('navModeBtn');
 const insertModeBtn = document.getElementById('insertModeBtn');
 const symbolsEl = document.getElementById('symbols');
-const legendEl = document.getElementById('legend');
-const arOptions = document.getElementById('arOptions');
-const arViewer = document.getElementById('arViewer');
-const arMeta = document.getElementById('arMeta');
-const launchArBtn = document.getElementById('launchArBtn');
 
-function setStatus(msg){ statusBox.style.display = msg ? 'block' : 'none'; statusBox.textContent = msg || ''; }
-function setError(msg){ errorBox.style.display = msg ? 'block' : 'none'; errorBox.textContent = msg || ''; }
+function setModel(kind){
+  btnV.className = '';
+  btn55.className = '';
+  btn65.className = '';
+  const model = MODELS[kind];
+  mv.src = model.src;
+  mv.setAttribute('orientation', model.orientation);
+  dim.textContent = model.dim;
+  if(kind === 'v') btnV.className = 'primary';
+  if(kind === 'd55') btn55.className = 'primary';
+  if(kind === 'd65') btn65.className = 'primary';
+}
+
+btnV.onclick = () => setModel('v');
+btn55.onclick = () => setModel('d55');
+btn65.onclick = () => setModel('d65');
+btnAr.onclick = async () => {
+  if (!location.protocol.startsWith('http')) {
+    alert('Apri questa pagina da GitHub Pages o altro link HTTPS per usare AR.');
+    return;
+  }
+  try { await mv.activateAR(); } catch { alert('AR non disponibile in questo momento.'); }
+};
 
 function symbolSvg(type, small=false){
   const h = small ? 24 : 30, w = small ? 56 : 70;
@@ -224,34 +240,24 @@ function renderSymbols(){
     btn.type = 'button';
     btn.className = 'symbol-btn' + (state.selectedType === symbol.key ? ' active' : '');
     btn.innerHTML = `<div class="symbol-preview">${symbolSvg(symbol.key)}</div><div class="symbol-label">${symbol.label}</div>`;
-    btn.addEventListener('click', ()=>{ state.selectedType = symbol.key; renderSymbols(); });
+    btn.onclick = () => { state.selectedType = symbol.key; renderSymbols(); };
     symbolsEl.appendChild(btn);
   });
 }
+renderSymbols();
 
-function renderLegend(){
-  legendEl.innerHTML = '';
-  SYMBOLS.forEach(symbol => {
-    const item = document.createElement('div');
-    item.className = 'legend-item';
-    item.innerHTML = `<div style="color:#0f172a">${symbolSvg(symbol.key, true)}</div><div>${symbol.label}</div>`;
-    legendEl.appendChild(item);
-  });
+function setMode(mode){
+  state.interactionMode = mode;
+  navModeBtn.className = mode === 'navigate' ? 'mode-on' : '';
+  insertModeBtn.className = mode === 'insert' ? 'mode-on' : '';
 }
+navModeBtn.onclick = () => setMode('navigate');
+insertModeBtn.onclick = () => setMode('insert');
 
 function applyTransform(){
   stage.style.transform = `translate(${state.panX}px, ${state.panY}px) scale(${state.zoom})`;
   zoomRange.value = String(Math.round(state.zoom * 100));
   zoomValue.textContent = `${Math.round(state.zoom * 100)}%`;
-}
-
-function setMode(mode){
-  state.interactionMode = mode;
-  navModeBtn.className = 'btn ' + (mode === 'navigate' ? 'primary' : 'secondary');
-  insertModeBtn.className = 'btn ' + (mode === 'insert' ? 'primary' : 'secondary');
-  navHint.textContent = mode === 'navigate'
-    ? 'Modalità attiva: Naviga PDF. Trascina con un dito, pizzica per zoom.'
-    : 'Modalità attiva: Inserisci simboli. Tocca la planimetria per aggiungere simboli.';
 }
 
 function updateMarkerMeta(){
@@ -267,34 +273,39 @@ function renderMarkers(){
     el.style.left = `${marker.x}px`;
     el.style.top = `${marker.y}px`;
     el.innerHTML = `<div style="color:#0f172a">${symbolSvg(marker.type, true)}</div>`;
-    el.addEventListener('click', (e)=>{ e.stopPropagation(); state.selectedMarkerId = marker.id; renderMarkers(); updateMarkerMeta(); });
+    el.onclick = (e) => { e.stopPropagation(); state.selectedMarkerId = marker.id; renderMarkers(); updateMarkerMeta(); };
 
     const del = document.createElement('button');
     del.type = 'button';
     del.className = 'del';
     del.textContent = '×';
-    del.addEventListener('click', (e)=>{ e.stopPropagation(); state.markers = state.markers.filter(m => m.id !== marker.id); if(state.selectedMarkerId===marker.id) state.selectedMarkerId = null; renderMarkers(); updateMarkerMeta(); });
+    del.onclick = (e) => {
+      e.stopPropagation();
+      state.markers = state.markers.filter(m => m.id !== marker.id);
+      if (state.selectedMarkerId === marker.id) state.selectedMarkerId = null;
+      renderMarkers();
+      updateMarkerMeta();
+    };
     if (state.selectedMarkerId === marker.id) el.appendChild(del);
 
     let drag = null;
-    el.addEventListener('pointerdown', (e)=>{
+    el.addEventListener('pointerdown', (e) => {
       e.stopPropagation();
       drag = { startX:e.clientX, startY:e.clientY, markerX:marker.x, markerY:marker.y };
-      state.selectedMarkerId = marker.id;
       el.setPointerCapture?.(e.pointerId);
-      renderMarkers();
-      updateMarkerMeta();
     });
-    el.addEventListener('pointermove', (e)=>{
+    el.addEventListener('pointermove', (e) => {
       if(!drag) return;
       const dx = (e.clientX - drag.startX) / state.zoom;
       const dy = (e.clientY - drag.startY) / state.zoom;
       marker.x = Math.max(15, drag.markerX + dx);
       marker.y = Math.max(15, drag.markerY + dy);
-      el.style.left = `${marker.x}px`; el.style.top = `${marker.y}px`;
+      el.style.left = `${marker.x}px`;
+      el.style.top = `${marker.y}px`;
       updateMarkerMeta();
     });
-    el.addEventListener('pointerup', (e)=>{ drag = null; try{ el.releasePointerCapture?.(e.pointerId); }catch{} });
+    el.addEventListener('pointerup', () => drag = null);
+    el.addEventListener('pointercancel', () => drag = null);
 
     stage.appendChild(el);
   });
@@ -307,32 +318,47 @@ async function renderPdf(bytes){
   const viewport = page.getViewport({ scale: 1.35 });
   const ctx = pdfCanvas.getContext('2d');
   if(!ctx) throw new Error('Canvas non disponibile.');
-  pdfCanvas.width = viewport.width; pdfCanvas.height = viewport.height;
-  stage.style.width = `${viewport.width}px`; stage.style.height = `${viewport.height}px`;
+  pdfCanvas.width = viewport.width;
+  pdfCanvas.height = viewport.height;
+  stage.style.width = `${viewport.width}px`;
+  stage.style.height = `${viewport.height}px`;
   await page.render({ canvasContext: ctx, viewport }).promise;
-  state.canvasWidth = viewport.width; state.canvasHeight = viewport.height; state.pdfPages = pdf.numPages;
+  state.canvasWidth = viewport.width;
+  state.canvasHeight = viewport.height;
+  state.pdfPages = pdf.numPages;
 }
 
-pdfFile.addEventListener('change', async (e)=>{
+pdfFile.addEventListener('change', async (e) => {
   const file = e.target.files?.[0];
   if(!file) return;
-  if(!file.name.toLowerCase().endsWith('.pdf')){ setError('Seleziona un file PDF valido.'); return; }
-  setError(''); setStatus('Caricamento PDF in corso...'); state.markers = []; state.selectedMarkerId = null;
+  if(!file.name.toLowerCase().endsWith('.pdf')){
+    alert('Seleziona un file PDF valido.');
+    return;
+  }
   try{
     const bytes = new Uint8Array(await file.arrayBuffer());
-    state.pdfBytes = bytes; state.pdfName = file.name;
+    state.pdfBytes = bytes;
+    state.pdfName = file.name;
     await renderPdf(bytes);
-    emptyState.style.display = 'none'; viewer.style.display = 'grid';
+    emptyState.style.display = 'none';
+    stage.style.display = 'inline-block';
     fileMeta.textContent = `File: ${state.pdfName} | Pagine PDF: ${state.pdfPages}`;
-    state.zoom = 1; state.panX = 0; state.panY = 0; applyTransform();
-    renderMarkers(); updateMarkerMeta();
-    exportPngBtn.disabled = false; printBtn.disabled = false;
-    setStatus('PDF caricato correttamente. Ora puoi inserire i simboli o navigare la planimetria con il dito.');
-  }catch(err){ console.error(err); setError(err?.message || 'Errore durante il caricamento del PDF.'); setStatus(''); }
-  finally{ e.target.value = ''; }
+    state.zoom = 1;
+    state.panX = 0;
+    state.panY = 0;
+    state.markers = [];
+    state.selectedMarkerId = null;
+    applyTransform();
+    renderMarkers();
+    updateMarkerMeta();
+  }catch(err){
+    alert(err?.message || 'Errore durante il caricamento del PDF.');
+  }finally{
+    e.target.value = '';
+  }
 });
 
-stage.addEventListener('click', (e)=>{
+stage.addEventListener('click', (e) => {
   if(!state.pdfBytes) return;
   if(state.interactionMode !== 'insert') return;
   if(e.target !== stage && e.target !== pdfCanvas) return;
@@ -340,154 +366,113 @@ stage.addEventListener('click', (e)=>{
   const x = (e.clientX - rect.left) / state.zoom;
   const y = (e.clientY - rect.top) / state.zoom;
   const marker = { id: crypto.randomUUID(), type: state.selectedType, x, y };
-  state.markers.push(marker); state.selectedMarkerId = marker.id; renderMarkers(); updateMarkerMeta();
+  state.markers.push(marker);
+  state.selectedMarkerId = marker.id;
+  renderMarkers();
+  updateMarkerMeta();
 });
-
-function drawSymbolOnContext(ctx, marker){
-  const x = marker.x, y = marker.y;
-  ctx.save(); ctx.strokeStyle='#0d1f45'; ctx.fillStyle='#0d1f45'; ctx.lineWidth=3; ctx.font='bold 14px Arial';
-  if(marker.type === 'V' || marker.type === 'H'){ ctx.fillText(marker.type, x-6, y-4); ctx.fillRect(x-12, y+2, 24, 3); }
-  else if(marker.type === 'R'){ ctx.fillRect(x-18, y-1, 22, 3); ctx.fillText('R', x+8, y+4); }
-  else if(marker.type === 'L' || marker.type === 'E'){ ctx.beginPath(); ctx.arc(x-6, y, 8, 0, Math.PI*2); ctx.stroke(); ctx.fillText(marker.type, x+8, y+4); }
-  else if(marker.type === 'QE'){ ctx.beginPath(); ctx.moveTo(x-16, y+8); ctx.lineTo(x-6, y-8); ctx.lineTo(x+4, y+8); ctx.closePath(); ctx.fill(); ctx.fillText('QE', x+10, y+4); }
-  ctx.restore();
-}
-
-function buildExportCanvas(){
-  if(!state.pdfBytes) throw new Error('Prima carica un PDF.');
-  const exportCanvas = document.createElement('canvas');
-  exportCanvas.width = pdfCanvas.width; exportCanvas.height = pdfCanvas.height;
-  const ctx = exportCanvas.getContext('2d');
-  if(!ctx) throw new Error('Impossibile creare il canvas di export.');
-  ctx.drawImage(pdfCanvas, 0, 0);
-  state.markers.forEach(marker => drawSymbolOnContext(ctx, marker));
-  return exportCanvas;
-}
-
-exportPngBtn.addEventListener('click', ()=>{
-  try{
-    const canvas = buildExportCanvas();
-    canvas.toBlob((blob)=>{
-      if(!blob){ setError('Export immagine non riuscito.'); return; }
-      const a = document.createElement('a'); const url = URL.createObjectURL(blob);
-      a.href = url; a.download = (state.pdfName || 'planimetria').replace(/\.pdf$/i, '') + '_annotato.png';
-      a.click(); URL.revokeObjectURL(url); setStatus('PNG annotato esportato correttamente.');
-    }, 'image/png');
-  }catch(err){ setError(err?.message || 'Errore durante l’export PNG.'); }
-});
-
-printBtn.addEventListener('click', ()=>{
-  try{
-    const canvas = buildExportCanvas();
-    const dataUrl = canvas.toDataURL('image/png');
-    const win = window.open('', '_blank');
-    if(!win) throw new Error('Popup bloccato dal browser.');
-    win.document.write(`<!doctype html><html><head><title>Planimetria annotata</title><style>body{margin:0;background:#fff;display:flex;justify-content:center}img{max-width:100%;height:auto}</style></head><body><img src="${dataUrl}" alt="Planimetria annotata"></body></html>`);
-    win.document.close(); win.focus(); setTimeout(()=>win.print(), 250);
-    setStatus('Finestra di stampa aperta. Scegli Salva come PDF dal browser.');
-  }catch(err){ setError(err?.message || 'Errore durante la stampa.'); }
-});
-
-clearBtn.addEventListener('click', ()=>{ state.markers = []; state.selectedMarkerId = null; renderMarkers(); updateMarkerMeta(); setStatus(''); setError(''); });
-zoomInBtn.addEventListener('click', ()=>{ state.zoom = Math.min(3, +(state.zoom + 0.1).toFixed(2)); applyTransform(); });
-zoomOutBtn.addEventListener('click', ()=>{ state.zoom = Math.max(0.5, +(state.zoom - 0.1).toFixed(2)); applyTransform(); });
-fitBtn.addEventListener('click', ()=>{ const available = Math.max(200, canvasWrap.clientWidth - 24); if(!state.canvasWidth) return; state.zoom = Math.max(0.5, Math.min(3, +(available / state.canvasWidth).toFixed(2))); state.panX = 0; state.panY = 0; applyTransform(); });
-zoomRange.addEventListener('input', (e)=>{ state.zoom = Math.max(0.5, Math.min(3, Number(e.target.value)/100)); applyTransform(); });
-navModeBtn.addEventListener('click', ()=>setMode('navigate'));
-insertModeBtn.addEventListener('click', ()=>setMode('insert'));
 
 const pointers = new Map();
 let gestureStart = null;
-function distance(a,b){ const dx = a.x - b.x; const dy = a.y - b.y; return Math.hypot(dx,dy); }
 
-canvasWrap.addEventListener('pointerdown', (e)=>{
-  if(!state.pdfBytes || state.interactionMode !== 'navigate') return;
-  pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+function distance(a, b) {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+canvasWrap.addEventListener('pointerdown', (e) => {
+  if(!state.pdfBytes) return;
+  if(state.interactionMode !== 'navigate') return;
+
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
   canvasWrap.setPointerCapture?.(e.pointerId);
+
   const pts = [...pointers.values()];
-  if(pts.length === 1) gestureStart = { type:'pan', x:pts[0].x, y:pts[0].y, panX:state.panX, panY:state.panY };
-  else if(pts.length === 2) gestureStart = { type:'pinch', dist:distance(pts[0], pts[1]), zoom:state.zoom };
+
+  if (pts.length === 1) {
+    gestureStart = {
+      type: 'pan',
+      startX: pts[0].x,
+      startY: pts[0].y,
+      panX: state.panX,
+      panY: state.panY
+    };
+  } else if (pts.length === 2) {
+    gestureStart = {
+      type: 'pinch',
+      startDistance: distance(pts[0], pts[1]),
+      zoom: state.zoom
+    };
+  }
 });
 
-canvasWrap.addEventListener('pointermove', (e)=>{
-  if(!state.pdfBytes || state.interactionMode !== 'navigate' || !pointers.has(e.pointerId)) return;
-  pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+canvasWrap.addEventListener('pointermove', (e) => {
+  if(!state.pdfBytes) return;
+  if(state.interactionMode !== 'navigate') return;
+  if (!pointers.has(e.pointerId)) return;
+
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
   const pts = [...pointers.values()];
-  if(pts.length === 1 && gestureStart?.type === 'pan'){
-    state.panX = gestureStart.panX + (pts[0].x - gestureStart.x);
-    state.panY = gestureStart.panY + (pts[0].y - gestureStart.y);
+
+  if (pts.length === 1 && gestureStart?.type === 'pan') {
+    state.panX = gestureStart.panX + (pts[0].x - gestureStart.startX);
+    state.panY = gestureStart.panY + (pts[0].y - gestureStart.startY);
     applyTransform();
-  }else if(pts.length === 2){
-    if(!gestureStart || gestureStart.type !== 'pinch'){
-      gestureStart = { type:'pinch', dist:distance(pts[0], pts[1]), zoom:state.zoom };
+  } else if (pts.length === 2) {
+    if (!gestureStart || gestureStart.type !== 'pinch') {
+      gestureStart = {
+        type: 'pinch',
+        startDistance: distance(pts[0], pts[1]),
+        zoom: state.zoom
+      };
     }
-    const newDist = distance(pts[0], pts[1]);
-    const factor = newDist / Math.max(1, gestureStart.dist);
-    state.zoom = Math.max(0.5, Math.min(4, +(gestureStart.zoom * factor).toFixed(2)));
+    const newDistance = distance(pts[0], pts[1]);
+    const factor = newDistance / Math.max(1, gestureStart.startDistance);
+    state.zoom = Math.max(0.5, Math.min(5, gestureStart.zoom * factor));
     applyTransform();
   }
 });
 
-function endPointer(e){
+function endPointer(e) {
   pointers.delete(e.pointerId);
-  try{ canvasWrap.releasePointerCapture?.(e.pointerId); }catch{}
+  try { canvasWrap.releasePointerCapture?.(e.pointerId); } catch {}
   const pts = [...pointers.values()];
-  if(pts.length === 1) gestureStart = { type:'pan', x:pts[0].x, y:pts[0].y, panX:state.panX, panY:state.panY };
-  else gestureStart = null;
+  if (pts.length === 1) {
+    gestureStart = {
+      type: 'pan',
+      startX: pts[0].x,
+      startY: pts[0].y,
+      panX: state.panX,
+      panY: state.panY
+    };
+  } else {
+    gestureStart = null;
+  }
 }
+
 canvasWrap.addEventListener('pointerup', endPointer);
 canvasWrap.addEventListener('pointercancel', endPointer);
-
-function renderArOptions(){
-  arOptions.innerHTML = '';
-  AR_ITEMS.forEach(item => {
-    const active = state.arSelectedId === item.id;
-    const card = document.createElement('div');
-    card.className = 'ar-card' + (active ? ' active' : '');
-    card.innerHTML = `
-      <div class="ar-thumb"><img src="${item.preview}" alt="${item.title}"></div>
-      <h3>${item.title}</h3>
-      <div class="tiny">${item.subtitle}</div>
-      <div class="dim-list">
-        <div>Larghezza: ${item.widthCm} cm</div>
-        <div>Altezza: ${item.heightCm} cm</div>
-        <div>Profondità: ${item.depthCm} cm</div>
-        <div>${item.base}</div>
-      </div>
-      <button class="btn secondary" type="button">Seleziona</button>
-    `;
-    card.querySelector('button').addEventListener('click', ()=>{ state.arSelectedId = item.id; syncArSelection(); });
-    arOptions.appendChild(card);
-  });
-}
-
-function syncArSelection(){
-  const item = AR_ITEMS.find(i => i.id === state.arSelectedId) || AR_ITEMS[0];
-  arViewer.src = item.glb;
-  if(item.usdz) arViewer.setAttribute('ios-src', item.usdz); else arViewer.removeAttribute('ios-src');
-  arMeta.innerHTML = `
-    <div><strong>Selezionato:</strong> ${item.title}</div>
-    <div>Larghezza: ${item.widthCm} cm</div>
-    <div>Altezza: ${item.heightCm} cm</div>
-    <div>Profondità: ${item.depthCm} cm</div>
-    <div>${item.base}</div>
-  `;
-  renderArOptions();
-}
-
-launchArBtn.addEventListener('click', async ()=>{
-  try{
-    if(typeof arViewer.activateAR === 'function') await arViewer.activateAR();
-    else setError('AR non supportata in questo browser. Apri la pagina da smartphone compatibile.');
-  }catch(err){ setError(err?.message || 'Impossibile aprire la AR in questo momento.'); }
+canvasWrap.addEventListener('pointerleave', (e) => {
+  if (pointers.has(e.pointerId)) endPointer(e);
 });
 
-renderSymbols();
-renderLegend();
+zoomInBtn.onclick = () => { state.zoom = Math.min(5, +(state.zoom + 0.1).toFixed(2)); applyTransform(); };
+zoomOutBtn.onclick = () => { state.zoom = Math.max(0.5, +(state.zoom - 0.1).toFixed(2)); applyTransform(); };
+fitBtn.onclick = () => {
+  const available = Math.max(200, canvasWrap.clientWidth - 24);
+  if(!state.canvasWidth) return;
+  state.zoom = Math.max(0.5, Math.min(5, +(available / state.canvasWidth).toFixed(2)));
+  state.panX = 0;
+  state.panY = 0;
+  applyTransform();
+};
+zoomRange.oninput = (e) => {
+  state.zoom = Math.max(0.5, Math.min(5, Number(e.target.value) / 100));
+  applyTransform();
+};
+
+setModel('v');
+setMode('navigate');
 applyTransform();
-renderArOptions();
-syncArSelection();
-setMode('insert');
 </script>
 </body>
 </html>
