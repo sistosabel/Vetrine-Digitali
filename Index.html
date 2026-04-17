@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Planimetria AR PRO</title>
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+  <style>
+    :root{
+      --bg:#f3f4f6; --card:#fff; --text:#0f172a; --muted:#64748b; --line:#dbe1ea; --primary:#0f172a;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+    .wrap{max-width:1200px;margin:0 auto;padding:16px;display:grid;gap:16px}
+    .grid{display:grid;gap:16px}
+    @media (min-width:980px){.grid{grid-template-columns:360px 1fr}}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+    .head{padding:16px 16px 0}
+    .body{padding:16px;display:grid;gap:12px}
+    h2,h3,p{margin:0}
+    .hint{
+      border:1px solid var(--line);border-radius:14px;padding:12px;font-size:13px;line-height:1.45;
+      background:#f8fafc;color:var(--muted)
+    }
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    button,input[type=file]{
+      min-height:44px;border-radius:12px;border:1px solid var(--line);padding:10px 14px;font-size:14px
+    }
+    button{cursor:pointer;background:#fff;color:var(--text)}
+    .primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+    model-viewer{
+      width:100%;height:50vh;background:linear-gradient(180deg,#f8fafc 0%,#e2e8f0 100%);
+      border:1px solid var(--line);border-radius:18px;touch-action:manipulation;
+    }
+    .meta{font-size:12px;color:var(--muted);line-height:1.5}
+    .zoom-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .zoom-value{min-width:56px;font-size:12px;color:var(--muted)}
+    .zoom-range{flex:1 1 180px}
+    .canvas-wrap{
+      overflow:hidden;border:1px solid var(--line);border-radius:18px;background:#fff;padding:12px;
+      touch-action:none;position:relative;min-height:420px;
+    }
+    .stage{
+      position:relative;display:inline-block;cursor:crosshair;touch-action:none;transform-origin:top left;will-change:transform;
+    }
+    canvas{display:block;max-width:none;border-radius:12px}
+    .symbols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .symbol-btn{border:1px solid var(--line);border-radius:16px;background:#fff;color:var(--text);padding:10px;cursor:pointer}
+    .symbol-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+    .symbol-preview{height:34px;display:flex;align-items:center;justify-content:center}
+    .symbol-label{margin-top:6px;text-align:center;font-size:12px}
+    .marker{
+      position:absolute;transform:translate(-50%,-50%);background:#fff;border:2px solid #cbd5e1;border-radius:12px;
+      box-shadow:0 4px 10px rgba(0,0,0,.12);padding:4px 8px;cursor:move;user-select:none;touch-action:none;
+    }
+    .marker.selected{border-color:var(--primary);box-shadow:0 0 0 3px rgba(15,23,42,.15)}
+    .del{
+      position:absolute;top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:12px
+    }
+    .mode-on{background:var(--primary);color:#fff;border-color:var(--primary)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="head"><h2>Planimetria AR PRO</h2></div>
+      <div class="body">
+        <div class="hint">Pacchetto GitHub pronto. Nell'area PDF puoi usare: <strong>1 dito = sposta planimetria</strong>, <strong>2 dita = pinch zoom</strong>, oltre allo slider zoom. In VR/AR il posizionamento è libero.</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div style="display:grid;gap:16px">
+        <div class="card">
+          <div class="head"><h3>Viewer AR</h3></div>
+          <div class="body">
+            <model-viewer
+              id="mv"
+              src="https://modelviewer.dev/shared-assets/models/Chair.glb"
+              ar
+              ar-modes="webxr scene-viewer quick-look"
+             
+              camera-controls
+             
+              auto-rotate>
+            </model-viewer>
+            <div class="row">
+              <button id="btnV" class="primary" type="button">Vetrina Verticale</button>
+              <button id="btn55" type="button">Orizzontale 55"</button>
+              <button id="btn65" type="button">Orizzontale 65"</button>
+            </div>
+            <button id="btnAr" class="primary" type="button">Apri in AR</button>
+            <div id="dim" class="meta">Verticale: 84 x 180 cm</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="head"><h3>PDF e simboli</h3></div>
+          <div class="body">
+            <label class="meta" for="pdfFile">Carica planimetria PDF</label>
+            <input id="pdfFile" type="file" accept="application/pdf" />
+            <div class="row">
+              <button id="navModeBtn" class="mode-on" type="button">Naviga PDF</button>
+              <button id="insertModeBtn" type="button">Inserisci simboli</button>
+            </div>
+            <div class="symbols" id="symbols"></div>
+            <div class="hint">In <strong>Naviga PDF</strong> puoi spostare liberamente la planimetria con un dito e zoomarla/rimpicciolirla con due dita. In <strong>Inserisci simboli</strong> tocchi il PDF per aggiungere il simbolo selezionato.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="head"><h3>Area di lavoro PDF</h3></div>
+        <div class="body">
+          <div id="fileMeta" class="meta">Nessun PDF caricato.</div>
+          <div class="zoom-row">
+            <button id="zoomOutBtn" type="button">−</button>
+            <button id="fitBtn" type="button">Fit</button>
+            <button id="zoomInBtn" type="button">+</button>
+            <input id="zoomRange" class="zoom-range" type="range" min="50" max="400" value="100" />
+            <div id="zoomValue" class="zoom-value">100%</div>
+          </div>
+          <div id="canvasWrap" class="canvas-wrap">
+            <div id="emptyState" class="hint">Apri SharePoint, scarica la planimetria PDF e caricala qui.</div>
+            <div id="stage" class="stage" style="display:none">
+              <canvas id="pdfCanvas"></canvas>
+            </div>
+          </div>
+          <div id="markerMeta" class="meta"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script type="module">
+import * as pdfjsLib from 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/+esm';
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.worker.min.mjs';
+
+const SYMBOLS = [
+  { key:'V', label:'Vetrina verticale' },
+  { key:'H', label:'Vetrina orizzontale' },
+  { key:'R', label:'Rack' },
+  { key:'L', label:'Punto LAN' },
+  { key:'QE', label:'Quadro elettrico' },
+  { key:'E', label:'Punto elettrico' },
+];
+
+const state = {
+  selectedType:'V',
+  markers:[],
+  selectedMarkerId:null,
+  pdfName:'',
+  pdfBytes:null,
+  pdfPages:0,
+  canvasWidth:0,
+  canvasHeight:0,
+  zoom:1,
+  panX:0,
+  panY:0,
+  interactionMode:'navigate'
+};
+
+const mv = document.getElementById('mv');
+const dim = document.getElementById('dim');
+const btnV = document.getElementById('btnV');
+const btn55 = document.getElementById('btn55');
+const btn65 = document.getElementById('btn65');
+const btnAr = document.getElementById('btnAr');
+
+const pdfFile = document.getElementById('pdfFile');
+const pdfCanvas = document.getElementById('pdfCanvas');
+const stage = document.getElementById('stage');
+const canvasWrap = document.getElementById('canvasWrap');
+const emptyState = document.getElementById('emptyState');
+const fileMeta = document.getElementById('fileMeta');
+const markerMeta = document.getElementById('markerMeta');
+const zoomInBtn = document.getElementById('zoomInBtn');
+const zoomOutBtn = document.getElementById('zoomOutBtn');
+const fitBtn = document.getElementById('fitBtn');
+const zoomRange = document.getElementById('zoomRange');
+const zoomValue = document.getElementById('zoomValue');
+const navModeBtn = document.getElementById('navModeBtn');
+const insertModeBtn = document.getElementById('insertModeBtn');
+const symbolsEl = document.getElementById('symbols');
+
+function setModel(kind){
+  btnV.className = '';
+  btn55.className = '';
+  btn65.className = '';
+  if(kind === 'v'){
+    mv.src = 'https://modelviewer.dev/shared-assets/models/Chair.glb';
+    dim.textContent = 'Verticale: 84 x 180 cm';
+    btnV.className = 'primary';
+  } else if(kind === '55'){
+    mv.src = 'https://modelviewer.dev/shared-assets/models/RobotExpressive.glb';
+    dim.textContent = '55 pollici: 122 x 68 cm';
+    btn55.className = 'primary';
+  } else {
+    mv.src = 'https://modelviewer.dev/shared-assets/models/Astronaut.glb';
+    dim.textContent = '65 pollici: 144 x 81 cm';
+    btn65.className = 'primary';
+  }
+}
+btnV.onclick = () => setModel('v');
+btn55.onclick = () => setModel('55');
+btn65.onclick = () => setModel('65');
+btnAr.onclick = async () => {
+  if (!location.protocol.startsWith('http')) {
+    alert('Apri questa pagina da GitHub Pages o altro link HTTPS per usare AR. In AR puoi spostare, ruotare e ridimensionare liberamente il modello.');
+    return;
+  }
+  try { await mv.activateAR(); } catch { alert('AR non disponibile in questo momento.'); }
+};
+
+function symbolSvg(type, small=false){
+  const h = small ? 24 : 30, w = small ? 56 : 70;
+  switch(type){
+    case 'V': return `<svg viewBox="0 0 90 40" width="${w}" height="${h}"><text x="26" y="18" font-size="16" font-weight="700" fill="currentColor">V</text><rect x="20" y="24" width="32" height="4" fill="currentColor" /></svg>`;
+    case 'H': return `<svg viewBox="0 0 90 40" width="${w}" height="${h}"><text x="24" y="18" font-size="16" font-weight="700" fill="currentColor">H</text><rect x="20" y="24" width="32" height="4" fill="currentColor" /></svg>`;
+    case 'R': return `<svg viewBox="0 0 90 40" width="${w}" height="${h}"><rect x="12" y="18" width="38" height="6" fill="currentColor" /><text x="58" y="25" font-size="13" font-weight="700" fill="currentColor">R</text></svg>`;
+    case 'L': return `<svg viewBox="0 0 90 40" width="${w}" height="${h}"><circle cx="28" cy="20" r="10" fill="none" stroke="currentColor" stroke-width="5" /><text x="48" y="25" font-size="13" font-weight="700" fill="currentColor">L</text></svg>`;
+    case 'QE': return `<svg viewBox="0 0 100 40" width="${w}" height="${h}"><path d="M28 10 L39 29 H17 Z" fill="currentColor" /><text x="48" y="25" font-size="13" font-weight="700" fill="currentColor">QE</text></svg>`;
+    case 'E': return `<svg viewBox="0 0 90 40" width="${w}" height="${h}"><circle cx="28" cy="20" r="10" fill="none" stroke="currentColor" stroke-width="5" /><text x="50" y="25" font-size="13" font-weight="700" fill="currentColor">E</text></svg>`;
+    default: return '';
+  }
+}
+
+function renderSymbols(){
+  symbolsEl.innerHTML = '';
+  SYMBOLS.forEach(symbol => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'symbol-btn' + (state.selectedType === symbol.key ? ' active' : '');
+    btn.innerHTML = `<div class="symbol-preview">${symbolSvg(symbol.key)}</div><div class="symbol-label">${symbol.label}</div>`;
+    btn.onclick = () => { state.selectedType = symbol.key; renderSymbols(); };
+    symbolsEl.appendChild(btn);
+  });
+}
+renderSymbols();
+
+function setMode(mode){
+  state.interactionMode = mode;
+  navModeBtn.className = mode === 'navigate' ? 'mode-on' : '';
+  insertModeBtn.className = mode === 'insert' ? 'mode-on' : '';
+}
+navModeBtn.onclick = () => setMode('navigate');
+insertModeBtn.onclick = () => setMode('insert');
+
+function applyTransform(){
+  stage.style.transform = `translate(${state.panX}px, ${state.panY}px) scale(${state.zoom})`;
+  zoomRange.value = String(Math.round(state.zoom * 100));
+  zoomValue.textContent = `${Math.round(state.zoom * 100)}%`;
+}
+
+function updateMarkerMeta(){
+  const marker = state.markers.find(m => m.id === state.selectedMarkerId);
+  markerMeta.textContent = marker ? `Selezionato: ${marker.type} | X: ${Math.round(marker.x)} | Y: ${Math.round(marker.y)}` : '';
+}
+
+function renderMarkers(){
+  stage.querySelectorAll('.marker').forEach(el => el.remove());
+  state.markers.forEach(marker => {
+    const el = document.createElement('div');
+    el.className = 'marker' + (state.selectedMarkerId === marker.id ? ' selected' : '');
+    el.style.left = `${marker.x}px`;
+    el.style.top = `${marker.y}px`;
+    el.innerHTML = `<div style="color:#0f172a">${symbolSvg(marker.type, true)}</div>`;
+    el.onclick = (e) => { e.stopPropagation(); state.selectedMarkerId = marker.id; renderMarkers(); updateMarkerMeta(); };
+
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'del';
+    del.textContent = '×';
+    del.onclick = (e) => {
+      e.stopPropagation();
+      state.markers = state.markers.filter(m => m.id !== marker.id);
+      if (state.selectedMarkerId === marker.id) state.selectedMarkerId = null;
+      renderMarkers();
+      updateMarkerMeta();
+    };
+    if (state.selectedMarkerId === marker.id) el.appendChild(del);
+
+    let drag = null;
+    el.addEventListener('pointerdown', (e) => {
+      e.stopPropagation();
+      drag = { startX:e.clientX, startY:e.clientY, markerX:marker.x, markerY:marker.y };
+      el.setPointerCapture?.(e.pointerId);
+    });
+    el.addEventListener('pointermove', (e) => {
+      if(!drag) return;
+      const dx = (e.clientX - drag.startX) / state.zoom;
+      const dy = (e.clientY - drag.startY) / state.zoom;
+      marker.x = Math.max(15, drag.markerX + dx);
+      marker.y = Math.max(15, drag.markerY + dy);
+      el.style.left = `${marker.x}px`;
+      el.style.top = `${marker.y}px`;
+      updateMarkerMeta();
+    });
+    el.addEventListener('pointerup', () => drag = null);
+    el.addEventListener('pointercancel', () => drag = null);
+
+    stage.appendChild(el);
+  });
+}
+
+async function renderPdf(bytes){
+  const loadingTask = pdfjsLib.getDocument({ data: bytes });
+  const pdf = await loadingTask.promise;
+  const page = await pdf.getPage(1);
+  const viewport = page.getViewport({ scale: 1.35 });
+  const ctx = pdfCanvas.getContext('2d');
+  if(!ctx) throw new Error('Canvas non disponibile.');
+  pdfCanvas.width = viewport.width;
+  pdfCanvas.height = viewport.height;
+  stage.style.width = `${viewport.width}px`;
+  stage.style.height = `${viewport.height}px`;
+  await page.render({ canvasContext: ctx, viewport }).promise;
+  state.canvasWidth = viewport.width;
+  state.canvasHeight = viewport.height;
+  state.pdfPages = pdf.numPages;
+}
+
+pdfFile.addEventListener('change', async (e) => {
+  const file = e.target.files?.[0];
+  if(!file) return;
+  if(!file.name.toLowerCase().endsWith('.pdf')){
+    alert('Seleziona un file PDF valido.');
+    return;
+  }
+  try{
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    state.pdfBytes = bytes;
+    state.pdfName = file.name;
+    await renderPdf(bytes);
+    emptyState.style.display = 'none';
+    stage.style.display = 'inline-block';
+    fileMeta.textContent = `File: ${state.pdfName} | Pagine PDF: ${state.pdfPages}`;
+    state.zoom = 1;
+    state.panX = 0;
+    state.panY = 0;
+    state.markers = [];
+    state.selectedMarkerId = null;
+    applyTransform();
+    renderMarkers();
+    updateMarkerMeta();
+  }catch(err){
+    alert(err?.message || 'Errore durante il caricamento del PDF.');
+  }finally{
+    e.target.value = '';
+  }
+});
+
+stage.addEventListener('click', (e) => {
+  if(!state.pdfBytes) return;
+  if(state.interactionMode !== 'insert') return;
+  if(e.target !== stage && e.target !== pdfCanvas) return;
+  const rect = stage.getBoundingClientRect();
+  const x = (e.clientX - rect.left) / state.zoom;
+  const y = (e.clientY - rect.top) / state.zoom;
+  const marker = { id: crypto.randomUUID(), type: state.selectedType, x, y };
+  state.markers.push(marker);
+  state.selectedMarkerId = marker.id;
+  renderMarkers();
+  updateMarkerMeta();
+});
+
+// gesture touch: 1 dito sposta, 2 dita pinch
+const pointers = new Map();
+let start = null;
+
+function distance(a, b){
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+canvasWrap.addEventListener('pointerdown', e => {
+  if(!state.pdfBytes) return;
+  if(state.interactionMode !== 'navigate') return;
+  pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+
+  if (pointers.size === 1) {
+    const p = [...pointers.values()][0];
+    start = { type:'pan', x:p.x, y:p.y, panX:state.panX, panY:state.panY };
+  }
+  if (pointers.size === 2) {
+    const pts = [...pointers.values()];
+    start = { type:'pinch', dist:distance(pts[0], pts[1]), zoom:state.zoom };
+  }
+  canvasWrap.setPointerCapture?.(e.pointerId);
+});
+
+canvasWrap.addEventListener('pointermove', e => {
+  if(!pointers.has(e.pointerId)) return;
+  if(state.interactionMode !== 'navigate') return;
+  pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+
+  const pts = [...pointers.values()];
+
+  if (pts.length === 1 && start?.type === 'pan') {
+    state.panX = start.panX + (pts[0].x - start.x);
+    state.panY = start.panY + (pts[0].y - start.y);
+    applyTransform();
+  }
+
+  if (pts.length === 2 && start?.type === 'pinch') {
+    const newDist = distance(pts[0], pts[1]);
+    const scale = newDist / Math.max(1, start.dist);
+    state.zoom = Math.max(0.5, Math.min(4, start.zoom * scale));
+    applyTransform();
+  }
+});
+
+function endPointer(e){
+  pointers.delete(e.pointerId);
+  try { canvasWrap.releasePointerCapture(e.pointerId); } catch {}
+  if (pointers.size < 2) start = null;
+}
+canvasWrap.addEventListener('pointerup', endPointer);
+canvasWrap.addEventListener('pointercancel', endPointer);
+
+zoomInBtn.onclick = () => { state.zoom = Math.min(4, +(state.zoom + 0.1).toFixed(2)); applyTransform(); };
+zoomOutBtn.onclick = () => { state.zoom = Math.max(0.5, +(state.zoom - 0.1).toFixed(2)); applyTransform(); };
+fitBtn.onclick = () => {
+  const available = Math.max(200, canvasWrap.clientWidth - 24);
+  if(!state.canvasWidth) return;
+  state.zoom = Math.max(0.5, Math.min(4, +(available / state.canvasWidth).toFixed(2)));
+  state.panX = 0;
+  state.panY = 0;
+  applyTransform();
+};
+zoomRange.oninput = (e) => {
+  state.zoom = Math.max(0.5, Math.min(4, Number(e.target.value) / 100));
+  applyTransform();
+};
+
+setModel('v');
+setMode('navigate');
+applyTransform();
+</script>
+</body>
+</html>
